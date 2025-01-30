@@ -21,11 +21,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "23.x"
+          node-version: "16.x"
+          cache: npm
 
       - name: Install dependencies
         run: npm install
@@ -39,6 +42,7 @@ jobs:
       - name: Check for Native Code Changes
         id: check_native
         run: |
+          git fetch origin main:main || true
           if git diff --name-only origin/main...HEAD | grep -E "^(ios/|android/|package.json|package-lock.json|app.json|app.config.js|eas.json)"; then
             echo "NATIVE_CHANGED=true" >> $GITHUB_ENV
           fi
@@ -47,13 +51,13 @@ jobs:
         if: env.NATIVE_CHANGED == 'false'
         run: |
           BRANCH_NAME="pr-${{ github.event.pull_request.number }}"
-          eas update --branch $BRANCH_NAME --non-interactive
+          npx eas update --branch $BRANCH_NAME --non-interactive
 
       - name: Build Full App (Native changes detected)
         if: env.NATIVE_CHANGED == 'true'
         uses: expo/expo-github-action/preview-build@main
         with:
-          command: eas build --platform ios --profile preview --non-interactive
+          command: npx eas build --platform ios --profile preview --non-interactive
 
       - name: Comment in preview
         uses: expo/expo-github-action/preview-comment@v8
