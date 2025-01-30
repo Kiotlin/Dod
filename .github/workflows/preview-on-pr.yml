@@ -55,7 +55,7 @@ jobs:
           BRANCH_NAME="pr-${{ github.event.pull_request.number }}"
           PR_TITLE="${{ github.event.pull_request.title }}"
           MESSAGE=$(echo "$PR_TITLE" | sed 's/ /_/g')
-          eas update --message $MESSAGE --channel preview --branch $BRANCH_NAME --non-interactive
+          eas update --message $MESSAGE --branch $BRANCH_NAME --non-interactive
 
       - name: Build Full App (Native changes detected)
         if: env.NATIVE_CHANGED == 'true'
