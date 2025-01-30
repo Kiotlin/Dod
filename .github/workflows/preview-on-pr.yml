@@ -37,6 +37,7 @@ jobs:
         uses: expo/expo-github-action@v8
         with:
           expo-version: latest
+          eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Check for Native Code Changes
@@ -51,13 +52,13 @@ jobs:
         if: env.NATIVE_CHANGED == 'false'
         run: |
           BRANCH_NAME="pr-${{ github.event.pull_request.number }}"
-          npx eas update --branch $BRANCH_NAME --non-interactive
+          eas update --branch $BRANCH_NAME --non-interactive
 
       - name: Build Full App (Native changes detected)
         if: env.NATIVE_CHANGED == 'true'
         uses: expo/expo-github-action/preview-build@main
         with:
-          command: npx eas build --platform ios --profile preview --non-interactive
+          command: eas build --platform ios --profile preview --non-interactive
 
       - name: Comment in preview
         uses: expo/expo-github-action/preview-comment@v8
