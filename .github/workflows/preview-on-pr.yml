@@ -77,7 +77,7 @@ jobs:
 
           PROJECT_ID=${{ steps.preview_update.outputs.projectId }}
           GROUP_ID=${{ steps.preview_update.outputs.groupId }}
-          QR_CODE="${{ env.QRCODE_PREFIX }}${{ env.EXPOGO_PREFIX }}/$PROJECT_ID/group/$GROUP_ID"}}"
+          QR_CODE="${{ env.QRCODE_PREFIX }}${{ env.EXPOGO_PREFIX }}/$PROJECT_ID/group/$GROUP_ID"
 
           COMMENT_BODY=$(cat <<EOF
           This PR was automatically deployed!
