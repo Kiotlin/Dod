@@ -85,11 +85,13 @@ jobs:
           ![QR Code]($QR_CODE)
           EOF)
 
+          COMMENT_JSON=$(jq -Rsa . <<< "$COMMENT_BODY")
+
           curl -X POST \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token $GITHUB_TOKEN" \
             "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
-            -d '{"body":"$COMMENT_BODY"}'
+            -d '{"body": $COMMENT_JSON}'
 
       - name: Build Full App (Native changes detected)
         if: env.NATIVE_CHANGED == 'true'
