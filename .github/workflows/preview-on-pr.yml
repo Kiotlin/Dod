@@ -54,8 +54,8 @@ jobs:
         run: |
           BRANCH_NAME="pr-${{ github.event.pull_request.number }}"
           PR_TITLE="${{ github.event.pull_request.title }}"
-          MESSAGE=$(echo "$PR_TITLE" | sed 's/ /_/g')
-          eas update --message $MESSAGE --branch $BRANCH_NAME --non-interactive
+          MESSAGE=$(echo "$BRANCH_NAME: $PR_TITLE" | sed 's/ /_/g')
+          eas update --message $MESSAGE --channel preview --non-interactive
 
       - name: Build Full App (Native changes detected)
         if: env.NATIVE_CHANGED == 'true'
@@ -66,4 +66,4 @@ jobs:
       - name: Comment in preview
         uses: expo/expo-github-action/preview-comment@v8
         with:
-          channel: pr-${{ github.event.number }}
+          channel: preview
