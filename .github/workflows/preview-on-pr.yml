@@ -8,6 +8,8 @@ on:
 
 env:
   NATIVE_CHANGED: false
+  BRANCH_NAME: "pr-${{ github.event.pull_request.number }}"
+  PR_TITLE: "${{ github.event.pull_request.title }}"
 
 jobs:
   preview-build:
@@ -52,9 +54,7 @@ jobs:
       - name: Create Preview Update (if no Native changes)
         if: env.NATIVE_CHANGED == 'false'
         run: |
-          BRANCH_NAME="pr-${{ github.event.pull_request.number }}"
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          MESSAGE=$(echo "$BRANCH_NAME: $PR_TITLE" | sed 's/ /_/g')
+          MESSAGE=$(echo "${{env.BRANCH_NAME}}: ${{ env.PR_TITLE }}" | sed 's/ /_/g')
           eas update --message $MESSAGE --channel preview --non-interactive
 
       - name: Build Full App (Native changes detected)
@@ -63,7 +63,34 @@ jobs:
         with:
           command: eas build --platform ios --profile preview --non-interactive
 
-      - name: Comment in preview
+      - name: Obtain Expo Preview Comment
         uses: expo/expo-github-action/preview-comment@v8
+        id: expo_comment
         with:
           channel: preview
+          comment: false
+
+      - name: Post Comment in PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TITLE=$(echo "${{ env.BRANCH_NAME }}: ${{ env.PR_TITLE }}" | sed 's/ /_/g')
+          PROJECT_NAME=${{ steps.expo_comment.outputs.projectName }}
+          PROJECT_LINK=${{ steps.expo_comment.outputs.projectLink }}
+          QR_CODE="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=$PROJECT_LINK"
+
+          COMMENT_BODY=$(cat <<EOF
+          This pull request was automatically deployed! 
+          - Project: **$PROJECT_ID** 
+          - Channel: **Preview**
+          - Link: [Preview in Expo Go ↗]($PROJECT_LINK)<br>
+          ![QR Code]($QR_CODE)
+          EOF)
+
+          curl -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
+            -d "{\"body\": \"$COMMENT_BODY\"}"
