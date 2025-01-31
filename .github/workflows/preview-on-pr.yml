@@ -87,11 +87,22 @@ jobs:
 
           JSON_PAYLOAD=$(printf '{"body": %s}' "$(echo "$COMMENT_BODY" | jq -Rs .)")
 
-          curl -X POST \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
-            -d "$JSON_PAYLOAD"
+          RESPONSE=$(
+            curl -s -o response.json -w "%{http_code}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+              -d "$JSON_PAYLOAD"
+          )
+
+          if [[ $RESPONSE -lt 200 || $RESPONSE -ge 300 ]]; then
+            echo "❌ Failed to post comment! GitHub API responded with status: $RESPONSE"
+            echo "GitHub API Response:"
+            cat response.json
+            exit 1  # 终止 GitHub Actions 任务
+          fi
+
+          echo "✅ Successfully posted PR comment!"
 
       - name: Build Full App (Native changes detected)
         if: env.NATIVE_CHANGED == 'true'
