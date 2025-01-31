@@ -10,6 +10,8 @@ env:
   NATIVE_CHANGED: false
   BRANCH_NAME: "pr-${{ github.event.pull_request.number }}"
   PR_TITLE: "${{ github.event.pull_request.title }}"
+  EXPOGO_PREFIX: "exp://u.expo.dev"
+  QRCODE_PREFIX: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data="
 
 jobs:
   preview-build:
@@ -69,10 +71,13 @@ jobs:
         run: |
           TITLE=${{ steps.preview_update.outputs.message }}
           RUNTIME_VERSION=${{ steps.preview_update.outputs.runtimeVersion }}
-          UPDATE_LINK=${{ steps.preview_update.outputs.link }}
+          PANEL_LINK=${{ steps.preview_update.outputs.link }}
           COMMIT_HASH=${{ steps.preview_update.outputs.gitCommitHash }}
           CREATE_AT=${{ steps.preview_update.outputs.createdAt }}
-          QR_CODE=${{ steps.preview_update.outputs.qr }}
+
+          PROJECT_ID=${{ steps.preview_update.outputs.projectId }}
+          GROUP_ID=${{ steps.preview_update.outputs.groupId }}
+          QR_CODE="${{ env.QRCODE_PREFIX }}${{ env.EXPOGO_PREFIX }}/$PROJECT_ID/group/$GROUP_ID"}}"
 
           COMMENT_BODY=$(cat <<EOF
           This PR was automatically deployed!
@@ -81,7 +86,7 @@ jobs:
           - Runtime Version: **$RUNTIME_VERSION**
           - hash(commit): **$COMMIT_HASH**
           - Created at: **$CREATE_AT**
-          - Link: [Preview in Expo Go ↗]($UPDATE_LINK)<br>
+          - Link: [Go To Expo Panel ↗]($PANEL_LINK)<br>
           ![QR Code]($QR_CODE)
           EOF)
 
@@ -99,7 +104,7 @@ jobs:
             echo "❌ Failed to post comment! GitHub API responded with status: $RESPONSE"
             echo "GitHub API Response:"
             cat response.json
-            exit 1  # 终止 GitHub Actions 任务
+            exit 1
           fi
 
           echo "✅ Successfully posted PR comment!"
